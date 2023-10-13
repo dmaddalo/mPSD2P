@@ -1,7 +1,7 @@
 %% INITIALIZER
 function tests = test_2drot
 %     clc;
-%     close all;
+    close all;
     tests = functiontests(localfunctions); % See the help if you want more info
     
     global output
@@ -61,8 +61,11 @@ function test_rotation(~)
         s2 = output.s2;
     end
     Xp3 = Xp1;
-
-    rot = 60;      % deg
+    
+    % This corresponds to a clockwise rotation of the probe frame x'-y' 
+    % (along which the probes are measuring) with respect to the actual 
+    % frame x-y (along whose direction - x - the dummy wave is traveling)
+    rot = 25;      % deg
     
     Xp2r = Xp1 + (Xp2 - Xp1)*cos(deg2rad(rot));
     Xp3r = Xp1 - (Xp2 - Xp1)*sin(deg2rad(rot));
@@ -92,7 +95,7 @@ function test_rotation(~)
     [~,fs2r] = ko.computefft(t,s2r);
     [~,fs3r] = ko.computefft(t,s3r);
     
-    csd12r = ko.CSD(fs1,fs2r,fqs);
+    csd12r = ko.CSD(fs2r,fs1,fqs);
     csd13r = ko.CSD(fs1,fs3r,fqs);
     
     [X12r,Y12r,SS12r] = ko.komega_binning(fqs,angle(csd12r),abs(csd12r),fqs,-pi:0.025:pi);
@@ -102,10 +105,14 @@ function test_rotation(~)
     surf(X12r,Y12r,SS12r,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
     axis([X12r(1) X12r(end) Y12r(1) Y12r(end)]); colorbar; caxis([1e-10 1]);
     set(gca,'ColorScale','log')
+    title('Rotated frame')
+    xlabel('k_{x''}')
     figure
     surf(X13r,Y13r,SS13r,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
     axis([X13r(1) X13r(end) Y13r(1) Y13r(end)]); colorbar; caxis([1e-10 1]);
     set(gca,'ColorScale','log');
+    title('Rotated frame')
+    xlabel('k_{y''}')
 
     %% Values along original axes 
 
@@ -120,16 +127,44 @@ function test_rotation(~)
     csd12 = ko.CSD(fs2,fs1,fqs);
     csd13 = ko.CSD(fs1,fs3,fqs);
     
-    [X12,Y12,SS12] = ko.komega_binning(fqs,angle(csd12),abs(csd12),fqs,-pi:0.025:pi);
-    [X13,Y13,SS13] = ko.komega_binning(fqs,angle(csd13),abs(csd13),fqs,-pi:0.025:pi);
+    [X12o,Y12o,SS12o] = ko.komega_binning(fqs,angle(csd12),abs(csd12),fqs,-pi:0.025:pi);
+    [X13o,Y13o,SS13o] = ko.komega_binning(fqs,angle(csd13),abs(csd13),fqs,-pi:0.025:pi);
+
+    figure
+    surf(X12o,Y12o,SS12o,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
+    axis([X12o(1) X12o(end) Y12o(1) Y12o(end)]); colorbar; caxis([1e-10 1]);
+    set(gca,'ColorScale','log')
+    title('Original frame')
+    xlabel('k_x')
+    figure
+    surf(X13o,Y13o,SS13o,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
+    axis([X13o(1) X13o(end) Y13o(1) Y13o(end)]); colorbar; caxis([1e-10 1]);
+    set(gca,'ColorScale','log');
+    xlabel('k_y')
+    title('Original frame')
+    
+    %% Rotate back to original axes
+    
+    pow12 = sqrt(abs(csd12r).^2*cos(deg2rad(rot))^2 + abs(csd13r).^2*sin(deg2rad(rot))^2);
+    pow13 = sqrt(abs(csd12r).^2*sin(deg2rad(rot))^2 + abs(csd13r).^2*cos(deg2rad(rot))^2);
+
+    ang12 = angle(csd12r)*cos(deg2rad(-rot)) - angle(csd13r)*sin(deg2rad(-rot));
+    ang13 = angle(csd12r)*sin(deg2rad(-rot)) + angle(csd13r)*cos(deg2rad(-rot));
+
+    [X12,Y12,SS12] = ko.komega_binning(fqs,ang12,pow12,fqs,-pi:0.025:pi);
+    [X13,Y13,SS13] = ko.komega_binning(fqs,ang13,pow13,fqs,-pi:0.025:pi);
 
     figure
     surf(X12,Y12,SS12,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
     axis([X12(1) X12(end) Y12(1) Y12(end)]); colorbar; caxis([1e-10 1]);
     set(gca,'ColorScale','log')
+    title('Rotated back to original frame')
+    xlabel('k_x')
     figure
     surf(X13,Y13,SS13,'edgecolor','none'); view(2); colormap([[1,1,1];jet]);
     axis([X13(1) X13(end) Y13(1) Y13(end)]); colorbar; caxis([1e-10 1]);
     set(gca,'ColorScale','log');
+    title('Rotated back to original frame')
+    xlabel('k_y')
 
 end
