@@ -8,11 +8,8 @@ if exist('G:\Il mio Drive','dir') == 0  && exist('G:\My Drive','dir') == 7
 elseif exist('G:\Il mio Drive','dir') == 7 && exist('G:\My Drive','dir') == 0
     root = ['G:\Il mio Drive\me and myself\Università\PhD'];
 else
-    root = [''];
+    root = [fullfile(pwd,'..')];
 end
-
-% addpath('G:\My Drive\me and myself\Università\PhD\MATLAB Drive\Adrians\github_repo')
-% addpath('G:\My Drive\me and myself\Università\PhD\matlab-figures\src')
 
 %% Define final directory
 additional = ['datasets/prelim/',varargin{1}];
