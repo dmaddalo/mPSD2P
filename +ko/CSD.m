@@ -1,4 +1,4 @@
-function [csd,varargout] = CSD(fs1,fs2,f,flim)
+function [f,csd,varargout] = CSD(fs1,fs2,f,varargin)
 % CSD Compute the Cross-Spectral Density of two Fourier-transformed
 % signals.
 %   
@@ -17,8 +17,15 @@ function [csd,varargout] = CSD(fs1,fs2,f,flim)
 %   * avg_CSD: (realization-averaged) complex cross spectral density array
 %       (m).
 
-if ~exist('flim','var')
+if nargin > 3 && ~isempty(varargin{1})
+    flim = varargin{1};
+else
     flim = f(end);
+end
+if nargin > 4
+    chunks = varargin{2};
+else
+    chunks = 1;
 end
 
 m = find(abs(f-flim) <= f(2)-f(1),1,'last'); % fft length
@@ -36,9 +43,9 @@ for i = 1:n
     psd2(:,i) = fs2(:,i).*conj(fs2(:,i));
 end
 
-csd = csd/n;
-psd1 = psd1/n;
-psd2 = psd2/n;
+csd = csd/chunks;
+psd1 = psd1/chunks;
+psd2 = psd2/chunks;
 
 varargout{1} = psd1;
 varargout{2} = psd2;
