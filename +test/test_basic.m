@@ -20,7 +20,7 @@ function tests = test_basic
 %     close all;
     tests = functiontests(localfunctions); % See the help if you want more info
 
-    global output
+    global output %#ok<GVMIS>
 
     %% DEFINES ALL PARAMETERS FOR THE SIGNAL MATRIX AND BUILDS IT
     % This is done in the main test module in order to avoid opening the
@@ -29,13 +29,13 @@ function tests = test_basic
     % The signal matrix has a size of [length(x),length(t)]. In order to
     % get a signal vector, it is required to specify a position within the
     % range of the x vector.
-    input.t = 0:0.0005:0.1;  % time vector [s]
+    input.t = 0:0.0005:0.5;  % time vector [s]
     input.x = 0:0.0005:10;  % space vector [m]
 
     input.Xp1 = 5.0;
     input.Xp2 = 4.9;
     
-    input.freq0 = 50;     % main frequency [Hz]
+    input.freq0 = 52;     % main frequency [Hz]
     input.lambda0 = 3;    % main wavelength [m]
     input.Ar = 1;      % amplitude of right traveling wave (a.u.)
     input.Al = 0;       % amplitude of left travelig wave (a.u.)
@@ -59,7 +59,7 @@ end
 %% TEST 3
 function test_PSD2P(~)
     
-    global output
+    global output %#ok<GVMIS>
 
     Xp1 = output.Xp1;
     Xp2 = output.Xp2;
