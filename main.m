@@ -3,15 +3,15 @@ clearvars; clear all;
 %% d = axial distance [mm]
 d = 20;
 %% alpha = angular displacement [deg]
-alpha = 0;
+alpha = 50;
 %% SCCM
-mdot = 1;
+mdot = 1.6;
 %%
 rot = 25;
-forced = 1;
-day = '3.10';
+forced = 0;
+day = '14.10';
 %% Number of chunks in which to divide the waveform
-chunks = 10;
+chunks = 1;
 %% Binning parameters (none of those depend on the dataset)
 df = 200;       % Hz
 dk = 3;         % deg
@@ -37,7 +37,7 @@ end
 % [t,WaveData] = io.matload(directory,samples);
 
 % Adjust
-celldays = {'3.10','4.10','5.10'};
+celldays = {'3.10','4.10','5.10','14.10'};
 if any(cell2mat(cellfun(@(x) strcmp(day,x),celldays,'UniformOutput',false)))
     rho = 143.1;
     x = 130; y = 60;
@@ -71,6 +71,7 @@ end
 if df < fRFT(2)-fRFT(1)
     df = fRFT(2)-fRFT(1);
 end
+
 fRFTbin = fRFT(1):df:flim;
 fRFTbin = fRFTbin(:);
 
@@ -79,14 +80,14 @@ fRFTbin = fRFTbin(:);
 
 % Azimuthal
 % [csd_az,psd2,psd1] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,1),fRFT,flim);
-[csd_az,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim);
+[fRFTcut,csd_az,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim,chunks);
 
 % Axial
 % [csd_ax,psd1,psd3] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,3),fRFT,flim);
-[csd_ax,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim);
+[~,csd_ax,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim,chunks);
 
 % Radial
-[csd_rd,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim);
+[~,csd_rd,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim,chunks);
 
 %% Correct probe orientation
 % Provisional, only accounts for counterclockwise rotation along the
@@ -135,10 +136,13 @@ stats_rd = ko.computestats(psd2p_rd,psd2,psd1,fRFT,2*df,flim);
 
 
 % Rotate coherence
-coherence_ax = sqrt(abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2 + abs(stats_rd.coherence).^2*sin(deg2rad(rot))^2);
-coherence_rd = sqrt(abs(stats_ax.coherence).^2*sin(deg2rad(rot))^2 + abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2);
-stats_ax.coherence = coherence_ax;
-stats_rd.coherence = coherence_rd;
+msc_az = abs(stats_az.coherence).^2;
+msc_ax = abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2 + abs(stats_rd.coherence).^2*sin(deg2rad(rot))^2;
+msc_rd = abs(stats_ax.coherence).^2*sin(deg2rad(rot))^2 + abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2;
+
+stats_az.coherence = msc_az;
+stats_ax.coherence = msc_ax;
+stats_rd.coherence = msc_rd;
 
 %% Re-assign and plot
 % Azimuthal
