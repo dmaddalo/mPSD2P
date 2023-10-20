@@ -22,7 +22,7 @@ function separateplots(stats,Kcsd,Fcsd,SScsd,params)
     %--------------------------------------------------------------------------
     title(['Azimuthal dispersion; $\dot{m} = ',num2str(params.mdot), ...
         ', \alpha = ',num2str(params.alpha),', d = ',num2str(params.d), ...
-        '$;' newline 'CSD averaged k-omega;']);
+        '$;' newline 'CSD averaged k-omega']);
     cc = get(gcf,'Children');
     defaults.default_properties_colorbar(cc(1));
     %--------------------------------------------------------------------------
