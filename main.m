@@ -5,16 +5,17 @@ d = 20;
 %% alpha = angular displacement [deg]
 alpha = 50;
 %% SCCM
-mdot = 1.6;
+mdot = 2.4;
 %%
 rot = 25;
 forced = 0;
-day = '14.10';
+not = 1;
+day = '16.10';
 %% Number of chunks in which to divide the waveform
 chunks = 1;
 %% Binning parameters (none of those depend on the dataset)
 df = 200;       % Hz
-dk = 3;         % deg
+dk = 2;         % deg
 flim = 1e5;     % upper limit frequency
 
 % oldnew = 1;
@@ -25,6 +26,8 @@ directory = io.definefolder(mdot,d,alpha,day);
 
 if forced == true
     directory = [directory,'-forced'];
+elseif not == true
+   directory = [directory,' - Copie'];
 end
 
 %% Loading data
@@ -37,7 +40,7 @@ end
 % [t,WaveData] = io.matload(directory,samples);
 
 % Adjust
-celldays = {'3.10','4.10','5.10','14.10'};
+celldays = {'3.10','4.10','5.10','16.10'};
 if any(cell2mat(cellfun(@(x) strcmp(day,x),celldays,'UniformOutput',false)))
     rho = 143.1;
     x = 130; y = 60;
@@ -80,30 +83,33 @@ fRFTbin = fRFTbin(:);
 
 % Azimuthal
 % [csd_az,psd2,psd1] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,1),fRFT,flim);
-[fRFTcut,csd_az,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim,chunks);
+[fRFTcut,csd32,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim,chunks);
+% [fRFTcut,csd32,psd2,psd3] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,3),fRFT,flim,chunks);
 
 % Axial
 % [csd_ax,psd1,psd3] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,3),fRFT,flim);
-[~,csd_ax,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim,chunks);
+[~,csd24,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim,chunks);
+% [~,csd24,psd4,~] = ko.CSD(WaveData_t(:,:,4),WaveData_t(:,:,2),fRFT,flim,chunks);
 
 % Radial
-[~,csd_rd,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim,chunks);
+[~,csd12,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim,chunks);
+% [~,csd12,~,psd1] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,1),fRFT,flim,chunks);
 
 %% Correct probe orientation
 % Provisional, only accounts for counterclockwise rotation along the
 % azimuthal direction
 
-psd2p_az.orig = csd_az;
-psd2p_ax.orig = csd_ax;
-psd2p_rd.orig = csd_rd;
+psd2p_az.orig = csd32;
+psd2p_ax.orig = csd24;
+psd2p_rd.orig = csd12;
 
-psd2p_az.pow = abs(csd_az);
-psd2p_ax.pow = sqrt(abs(csd_ax).^2*cos(deg2rad(rot))^2 + abs(csd_rd).^2*sin(deg2rad(rot))^2);
-psd2p_rd.pow = sqrt(abs(csd_ax).^2*sin(deg2rad(rot))^2 + abs(csd_rd).^2*cos(deg2rad(rot))^2);
+psd2p_az.pow = abs(csd32);
+psd2p_ax.pow = sqrt(abs(csd24).^2*cos(deg2rad(rot))^2 + abs(csd12).^2*sin(deg2rad(rot))^2);
+psd2p_rd.pow = sqrt(abs(csd24).^2*sin(deg2rad(rot))^2 + abs(csd12).^2*cos(deg2rad(rot))^2);
 
-psd2p_az.ang = angle(csd_az);
-psd2p_ax.ang = angle(csd_ax)*cos(deg2rad(rot)) - angle(csd_rd)*sin(deg2rad(rot));
-psd2p_rd.ang = angle(csd_ax)*sin(deg2rad(rot)) + angle(csd_rd)*cos(deg2rad(rot));
+psd2p_az.ang = angle(csd32);
+psd2p_ax.ang = angle(csd24)*cos(deg2rad(rot)) - angle(csd12)*sin(deg2rad(rot));
+psd2p_rd.ang = angle(csd24)*sin(deg2rad(rot)) + angle(csd12)*cos(deg2rad(rot));
 
 %% PSD2P
 % Computed on the binned frequency vector fRFTbin
