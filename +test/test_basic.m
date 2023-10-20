@@ -80,7 +80,7 @@ function test_PSD2P(~)
     [fqs,fs1] = ko.computefft(t,s1);
     [~,fs2] = ko.computefft(t,s2);
     
-    [avg_CSD] = ko.CSD(fs1,fs2,fqs);
+    [~,avg_CSD] = ko.CSD(fs1,fs2,fqs);
     
     [X,Y,SS] = ko.komega_binning(fqs,angle(avg_CSD),abs(avg_CSD),fqs,-pi:0.025:pi);
     
