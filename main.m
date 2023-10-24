@@ -5,11 +5,11 @@ d = 20;
 %% alpha = angular displacement [deg]
 alpha = 50;
 %% SCCM
-mdot = 2.4;
+mdot = 1.2;
 %%
 rot = 25;
 forced = 0;
-not = 1;
+not = 0;
 day = '16.10';
 %% Number of chunks in which to divide the waveform
 chunks = 1;
@@ -99,29 +99,29 @@ fRFTbin = fRFTbin(:);
 % Provisional, only accounts for counterclockwise rotation along the
 % azimuthal direction
 
-psd2p_az.orig = csd32;
-psd2p_ax.orig = csd24;
-psd2p_rd.orig = csd12;
+csd_az.orig = csd32;
+csd_ax.orig = csd24;
+csd_rd.orig = csd12;
 
-psd2p_az.pow = abs(csd32);
-psd2p_ax.pow = sqrt(abs(csd24).^2*cos(deg2rad(rot))^2 + abs(csd12).^2*sin(deg2rad(rot))^2);
-psd2p_rd.pow = sqrt(abs(csd24).^2*sin(deg2rad(rot))^2 + abs(csd12).^2*cos(deg2rad(rot))^2);
+csd_az.pow = abs(csd32);
+csd_ax.pow = sqrt(abs(csd24).^2*cos(deg2rad(rot))^2 + abs(csd12).^2*sin(deg2rad(rot))^2);
+csd_rd.pow = sqrt(abs(csd24).^2*sin(deg2rad(rot))^2 + abs(csd12).^2*cos(deg2rad(rot))^2);
 
-psd2p_az.ang = angle(csd32);
-psd2p_ax.ang = angle(csd24)*cos(deg2rad(rot)) - angle(csd12)*sin(deg2rad(rot));
-psd2p_rd.ang = angle(csd24)*sin(deg2rad(rot)) + angle(csd12)*cos(deg2rad(rot));
+csd_az.ang = angle(csd32);
+csd_ax.ang = angle(csd24)*cos(deg2rad(rot)) - angle(csd12)*sin(deg2rad(rot));
+csd_rd.ang = angle(csd24)*sin(deg2rad(rot)) + angle(csd12)*cos(deg2rad(rot));
 
 %% PSD2P
 % Computed on the binned frequency vector fRFTbin
 
 % Azimuthal
-[Kcsd_az,Fcsd_az,SScsd_az] = ko.komega_binning(fRFT,psd2p_az.ang,psd2p_az.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_az,Fcsd_az,SScsd_az] = ko.komega_binning(fRFT,csd_az.ang,csd_az.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 % Axial binned
-[Kcsd_ax,Fcsd_ax,SScsd_ax] = ko.komega_binning(fRFT,psd2p_ax.ang,psd2p_ax.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_ax,Fcsd_ax,SScsd_ax] = ko.komega_binning(fRFT,csd_ax.ang,csd_ax.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 % Radial binned
-[Kcsd_rd,Fcsd_rd,SScsd_rd] = ko.komega_binning(fRFT,psd2p_rd.ang,psd2p_rd.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_rd,Fcsd_rd,SScsd_rd] = ko.komega_binning(fRFT,csd_rd.ang,csd_rd.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 %% Statistics
 % Computed on the binned frequency vector fRFTbin
@@ -130,15 +130,15 @@ psd2p_rd.ang = angle(csd24)*sin(deg2rad(rot)) + angle(csd12)*cos(deg2rad(rot));
 
 % Azimuthal
 % stats_az = ko.computestats(csd_az,psd2,psd3,fRFT,2*df,flim);
-stats_az = ko.computestats(psd2p_az,psd2,psd3,fRFT,2*df,flim);
+stats_az = ko.computestats(csd_az,psd2,psd3,fRFT,2*df,flim);
 
 % Axial
 % stats_ax = ko.computestats(csd_ax,psd2,psd4,fRFT,2*df,flim);
-stats_ax = ko.computestats(psd2p_ax,psd2,psd4,fRFT,2*df,flim);
+stats_ax = ko.computestats(csd_ax,psd2,psd4,fRFT,2*df,flim);
 
 % Radial
 % stats_rd = ko.computestats(csd_rd,psd2,psd1,fRFT,2*df,flim);
-stats_rd = ko.computestats(psd2p_rd,psd2,psd1,fRFT,2*df,flim);
+stats_rd = ko.computestats(csd_rd,psd2,psd1,fRFT,2*df,flim);
 
 
 % Rotate coherence
