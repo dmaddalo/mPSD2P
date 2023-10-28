@@ -27,6 +27,7 @@ function [kk,ff,h] = komega_binning(f,k,p,fbin,kbin)
     % Ensure column vectors
     fbin = fbin(:);
     kbin = kbin(:);
+    % If these are matrices, isrow(...) returns false
     if isrow(f)
         f = f(:);
     end

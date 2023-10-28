@@ -1,4 +1,4 @@
-function stats = computestats(psd2p,psd1,psd2,f,df,flim)
+function stats = computestats(csdij,psdi,psdj,f,df,flim)
 
 % COMPUTESTATS Compute the csd statistics.
 % 
@@ -29,28 +29,28 @@ function stats = computestats(psd2p,psd1,psd2,f,df,flim)
 %           entry is df apart from each other.
 
 
-dfbin = f(1):df:flim;
-fbin = discretize(f,dfbin);
-fbin = fbin(~isnan(fbin));
+fbin = f(1):df:flim;
+fi = discretize(f,fbin);
+fi = fi(~isnan(fi));
 
-powerCSD = psd2p.pow;
-phaseCSD = psd2p.ang;
-origCSD = psd2p.orig;
+powerCSD = csdij.pow;
+phaseCSD = csdij.ang;
+origCSD = csdij.orig;
 
 
-stats.meanphase = zeros(fbin(end),1);
+stats.meanphase = zeros(fi(end),1);
 stats.stdphase = stats.meanphase;
 stats.meanpow = stats.meanphase;
 stats.stdpow = stats.meanphase;
-stats.fRFTbin = dfbin(1:end-1)';
-for i = fbin(1):fbin(end)
-    stats.meanphase(i) = angle(mean(exp(1i*phaseCSD(fbin == i,:)),'all'));
-    stats.stdphase(i) = mean(pi - abs(pi - abs(phaseCSD(fbin == i,:) - stats.meanphase(i))),'all');
+stats.fRFTbin = fbin(1:end-1)';
+for i = fi(1):fi(end)
+    stats.meanphase(i) = angle(mean(exp(1i*phaseCSD(fi == i,:)),'all'));
+    stats.stdphase(i) = mean(pi - abs(pi - abs(phaseCSD(fi == i,:) - stats.meanphase(i))),'all');
 
     % stats.meanpow(i) = mean(log10(abs(csd(fbin == i,:))),'all');
-    stats.meanpow(i) = mean(log10(powerCSD(fbin == i,:)),'all');
-    stats.stdpow(i) = std(log10(powerCSD(fbin == i,:)),0,'all');
+    stats.meanpow(i) = mean(log10(powerCSD(fi == i,:)),'all');
+    stats.stdpow(i) = std(log10(powerCSD(fi == i,:)),0,'all');
 
-    stats.coherence(i) = sum(origCSD(fbin == i,:),'all') ./ ( sqrt( sum(psd1(fbin == i,:),'all') )*sqrt( sum(psd2(fbin == i,:),'all') ) );
+    stats.coherence(i) = sum(origCSD(fi == i,:),'all') ./ ( sqrt( sum(psdi(fi == i,:),'all') )*sqrt( sum(psdj(fi == i,:),'all') ) );
 end
 stats.coherence = stats.coherence.';

@@ -3,18 +3,19 @@ clearvars; clear all;
 %% d = axial distance [mm]
 d = 20;
 %% alpha = angular displacement [deg]
-alpha = 0;
+alpha = 50;
 %% SCCM
-mdot = 1;
+mdot = 1.2;
 %%
 rot = 25;
-forced = 1;
-day = '3.10';
+forced = 0;
+not = 0;
+day = '16.10';
 %% Number of chunks in which to divide the waveform
-chunks = 10;
+chunks = 1;
 %% Binning parameters (none of those depend on the dataset)
 df = 200;       % Hz
-dk = 3;         % deg
+dk = 2;         % deg
 flim = 1e5;     % upper limit frequency
 
 % oldnew = 1;
@@ -25,6 +26,8 @@ directory = io.definefolder(mdot,d,alpha,day);
 
 if forced == true
     directory = [directory,'-forced'];
+elseif not == true
+   directory = [directory,' - Copie'];
 end
 
 %% Loading data
@@ -37,7 +40,7 @@ end
 % [t,WaveData] = io.matload(directory,samples);
 
 % Adjust
-celldays = {'3.10','4.10','5.10'};
+celldays = {'3.10','4.10','5.10','16.10'};
 if any(cell2mat(cellfun(@(x) strcmp(day,x),celldays,'UniformOutput',false)))
     rho = 143.1;
     x = 130; y = 60;
@@ -71,6 +74,7 @@ end
 if df < fRFT(2)-fRFT(1)
     df = fRFT(2)-fRFT(1);
 end
+
 fRFTbin = fRFT(1):df:flim;
 fRFTbin = fRFTbin(:);
 
@@ -79,42 +83,45 @@ fRFTbin = fRFTbin(:);
 
 % Azimuthal
 % [csd_az,psd2,psd1] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,1),fRFT,flim);
-[csd_az,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim);
+[fRFTcut,csd32,psd3,psd2] = ko.CSD(WaveData_t(:,:,3),WaveData_t(:,:,2),fRFT,flim,chunks);
+% [fRFTcut,csd32,psd2,psd3] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,3),fRFT,flim,chunks);
 
 % Axial
 % [csd_ax,psd1,psd3] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,3),fRFT,flim);
-[csd_ax,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim);
+[~,csd24,~,psd4] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,4),fRFT,flim,chunks);
+% [~,csd24,psd4,~] = ko.CSD(WaveData_t(:,:,4),WaveData_t(:,:,2),fRFT,flim,chunks);
 
 % Radial
-[csd_rd,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim);
+[~,csd12,psd1,~] = ko.CSD(WaveData_t(:,:,1),WaveData_t(:,:,2),fRFT,flim,chunks);
+% [~,csd12,~,psd1] = ko.CSD(WaveData_t(:,:,2),WaveData_t(:,:,1),fRFT,flim,chunks);
 
 %% Correct probe orientation
 % Provisional, only accounts for counterclockwise rotation along the
 % azimuthal direction
 
-psd2p_az.orig = csd_az;
-psd2p_ax.orig = csd_ax;
-psd2p_rd.orig = csd_rd;
+csd_az.orig = csd32;
+csd_ax.orig = csd24;
+csd_rd.orig = csd12;
 
-psd2p_az.pow = abs(csd_az);
-psd2p_ax.pow = sqrt(abs(csd_ax).^2*cos(deg2rad(rot))^2 + abs(csd_rd).^2*sin(deg2rad(rot))^2);
-psd2p_rd.pow = sqrt(abs(csd_ax).^2*sin(deg2rad(rot))^2 + abs(csd_rd).^2*cos(deg2rad(rot))^2);
+csd_az.pow = abs(csd32);
+csd_ax.pow = sqrt(abs(csd24).^2*cos(deg2rad(rot))^2 + abs(csd12).^2*sin(deg2rad(rot))^2);
+csd_rd.pow = sqrt(abs(csd24).^2*sin(deg2rad(rot))^2 + abs(csd12).^2*cos(deg2rad(rot))^2);
 
-psd2p_az.ang = angle(csd_az);
-psd2p_ax.ang = angle(csd_ax)*cos(deg2rad(rot)) - angle(csd_rd)*sin(deg2rad(rot));
-psd2p_rd.ang = angle(csd_ax)*sin(deg2rad(rot)) + angle(csd_rd)*cos(deg2rad(rot));
+csd_az.ang = angle(csd32);
+csd_ax.ang = angle(csd24)*cos(deg2rad(rot)) - angle(csd12)*sin(deg2rad(rot));
+csd_rd.ang = angle(csd24)*sin(deg2rad(rot)) + angle(csd12)*cos(deg2rad(rot));
 
 %% PSD2P
 % Computed on the binned frequency vector fRFTbin
 
 % Azimuthal
-[Kcsd_az,Fcsd_az,SScsd_az] = ko.komega_binning(fRFT,psd2p_az.ang,psd2p_az.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_az,Fcsd_az,SScsd_az] = ko.komega_binning(fRFT,csd_az.ang,csd_az.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 % Axial binned
-[Kcsd_ax,Fcsd_ax,SScsd_ax] = ko.komega_binning(fRFT,psd2p_ax.ang,psd2p_ax.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_ax,Fcsd_ax,SScsd_ax] = ko.komega_binning(fRFT,csd_ax.ang,csd_ax.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 % Radial binned
-[Kcsd_rd,Fcsd_rd,SScsd_rd] = ko.komega_binning(fRFT,psd2p_rd.ang,psd2p_rd.pow,fRFTbin,-pi:deg2rad(dk):pi);
+[Kcsd_rd,Fcsd_rd,SScsd_rd] = ko.komega_binning(fRFT,csd_rd.ang,csd_rd.pow,fRFTbin,-pi:deg2rad(dk):pi);
 
 %% Statistics
 % Computed on the binned frequency vector fRFTbin
@@ -123,22 +130,25 @@ psd2p_rd.ang = angle(csd_ax)*sin(deg2rad(rot)) + angle(csd_rd)*cos(deg2rad(rot))
 
 % Azimuthal
 % stats_az = ko.computestats(csd_az,psd2,psd3,fRFT,2*df,flim);
-stats_az = ko.computestats(psd2p_az,psd2,psd3,fRFT,2*df,flim);
+stats_az = ko.computestats(csd_az,psd2,psd3,fRFT,2*df,flim);
 
 % Axial
 % stats_ax = ko.computestats(csd_ax,psd2,psd4,fRFT,2*df,flim);
-stats_ax = ko.computestats(psd2p_ax,psd2,psd4,fRFT,2*df,flim);
+stats_ax = ko.computestats(csd_ax,psd2,psd4,fRFT,2*df,flim);
 
 % Radial
 % stats_rd = ko.computestats(csd_rd,psd2,psd1,fRFT,2*df,flim);
-stats_rd = ko.computestats(psd2p_rd,psd2,psd1,fRFT,2*df,flim);
+stats_rd = ko.computestats(csd_rd,psd2,psd1,fRFT,2*df,flim);
 
 
 % Rotate coherence
-coherence_ax = sqrt(abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2 + abs(stats_rd.coherence).^2*sin(deg2rad(rot))^2);
-coherence_rd = sqrt(abs(stats_ax.coherence).^2*sin(deg2rad(rot))^2 + abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2);
-stats_ax.coherence = coherence_ax;
-stats_rd.coherence = coherence_rd;
+msc_az = abs(stats_az.coherence).^2;
+msc_ax = abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2 + abs(stats_rd.coherence).^2*sin(deg2rad(rot))^2;
+msc_rd = abs(stats_ax.coherence).^2*sin(deg2rad(rot))^2 + abs(stats_ax.coherence).^2*cos(deg2rad(rot))^2;
+
+stats_az.coherence = msc_az;
+stats_ax.coherence = msc_ax;
+stats_rd.coherence = msc_rd;
 
 %% Re-assign and plot
 % Azimuthal

@@ -1,0 +1,5 @@
+figure
+for i = 1:size(output.WM,2)
+plot(output.x,output.WM(:,i)); hold on 
+scatter([output.Xp1 output.Xp2],[1 1],20,'.'); pause(0.1); hold off
+end
