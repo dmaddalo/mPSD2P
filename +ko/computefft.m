@@ -21,14 +21,13 @@ function [f,transform] = computefft(t,s)
 if size(s,1) == 1 && size(s,2) ~= 1
    s = s';
 end
-% Routine to force the vector sizes to even values if odd. If the vector 
-% lengths are odd, the fft algorithm computes wrong phase (with 
-% discontinuities at the points where the power peaks) and the 
-% magnitude-frequency assignment is not exact (empirically validated).
-if rem(length(t),2) ~= 0
-    t = t(1:end-1);
-    s = s(1:end-1,:);
-end
+% Routine to force the vector time size to even values if odd. As a matter 
+% of personal preference, having an even number of points allows to define
+% the frequency vector more accurately.
+% if rem(length(t),2) ~= 0
+%     t = t(1:end-1);
+%     s = s(1:end-1,:);
+% end
 
 m = length(t);
 n = length(s(1,:));
@@ -38,7 +37,7 @@ fs = 1/(t(2)-t(1));
 transform(m,n) = 0; % Allocate
 for i = 1:n
     % Normalize with length of t
-    transform(:,i) = fftshift(fft(s(:,i))/length(t));
+    transform(:,i) = fftshift(fft(s(:,i))/0.5/length(t));
 end
 
 fres = fs/length(t);
